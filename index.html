@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
+  <title>Calculadora de cotización de servicio de coordinación. Aire Consultora</title>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+      --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-12: 3rem; --space-16: 4rem;
+
+      --color-bg: #f4f3ee;
+      --color-surface: #f9f8f5;
+      --color-surface-2: #ffffff;
+      --color-surface-offset: #edeae5;
+      --color-border: #d4d1ca;
+      --color-divider: #dcd9d5;
+      --color-text: #101010;
+      --color-text-muted: #6d6a63;
+      --color-text-faint: #9f9b92;
+      --color-text-inverse: #ffffff;
+      --color-primary: #0453b2;
+      --color-primary-hover: #033d87;
+      --color-primary-highlight: #d0e1f7;
+
+      --radius-sm: 0.375rem; --radius-md: 0.6rem; --radius-lg: 0.9rem;
+      --radius-xl: 1.2rem; --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px rgba(4,83,178,0.06);
+      --shadow-md: 0 8px 24px rgba(4,83,178,0.08);
+      --font-body: 'Manrope', 'Inter', sans-serif;
+      --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background: var(--color-bg);
+    }
+    h1, h2, h3, p { margin: 0; }
+    button, input { font: inherit; }
+    button { cursor: pointer; border: none; }
+    input {
+      width: 100%;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-2);
+      color: var(--color-text);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 0.95rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      font-family: var(--font-body);
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 4px rgba(4,83,178,0.12);
+    }
+    input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* TOPBAR */
+    .topbar-wrapper {
+      background: var(--color-primary);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 16px rgba(4,83,178,0.18);
+      margin-bottom: var(--space-8);
+    }
+    .topbar-logo img {
+      height: 44px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .topbar-title {
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .topbar-subtitle {
+      color: rgba(255,255,255,0.75);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+    .topbar-right { display: flex; align-items: center; gap: var(--space-4); }
+
+    .app { max-width: 1280px; margin: 0 auto; padding: 0 var(--space-6) var(--space-8); }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); gap: var(--space-6); }
+    .panel {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+    .panel-inner { padding: var(--space-6); }
+    .panel + .panel { margin-top: var(--space-6); }
+    .section-header { margin-bottom: var(--space-5); }
+    .section-header h2 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      color: var(--color-text);
+    }
+    .section-header p { color: var(--color-text-muted); font-size: var(--text-sm); max-width: 48ch; }
+    .group-stack { display: grid; gap: var(--space-4); }
+    .row-card {
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      display: grid;
+      gap: var(--space-4);
+    }
+    .row-grid { display: grid; grid-template-columns: 1.4fr 0.7fr 0.8fr; gap: var(--space-3); }
+    .row-grid.expenses { grid-template-columns: 1.5fr 0.9fr; }
+    .field label {
+      display: block;
+      margin-bottom: 0.45rem;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-muted);
+    }
+    .actions { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+
+    .btn {
+      background: var(--color-primary);
+      color: var(--color-text-inverse);
+      padding: 0.88rem 1.15rem;
+      font-size: var(--text-sm);
+      font-weight: 700;
+      border-radius: var(--radius-full);
+      min-height: 44px;
+      font-family: var(--font-body);
+      transition: transform var(--transition), background var(--transition);
+      letter-spacing: 0.01em;
+    }
+    .btn:hover { background: var(--color-primary-hover); transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+      padding: 0.88rem 1.15rem;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      border-radius: var(--radius-full);
+      min-height: 44px;
+      font-family: var(--font-body);
+      transition: transform var(--transition), background var(--transition), border-color var(--transition);
+    }
+    .btn-ghost:hover { transform: translateY(-1px); background: var(--color-surface-offset); border-color: var(--color-primary); color: var(--color-primary); }
+
+    .theme-toggle {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: var(--radius-full);
+      color: #ffffff;
+      font-family: var(--font-body);
+      transition: background var(--transition);
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,0.25); }
+
+    .summary { position: sticky; top: var(--space-6); }
+    .summary-grid { display: grid; gap: var(--space-4); }
+    .metric {
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+    }
+    .metric span {
+      display: block;
+      color: var(--color-text-muted);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.45rem;
+    }
+    .metric strong { font-size: var(--text-lg); line-height: 1.1; font-weight: 700; }
+    .metric.total {
+      background: linear-gradient(135deg, rgba(4,83,178,0.10), var(--color-surface-2));
+      border-color: var(--color-primary-highlight);
+    }
+    .metric.total strong { color: var(--color-primary); }
+
+    .breakdown { display: grid; gap: var(--space-3); margin-top: 1.25rem; }
+    .break-item, .subitem { display: flex; justify-content: space-between; gap: var(--space-4); align-items: baseline; }
+    .break-item { padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-divider); }
+    .subgroup { display: grid; gap: var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-divider); }
+    .subgroup h3 { font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 700; }
+    .subitem { font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 500; }
+    .note {
+      margin-top: var(--space-4);
+      padding: var(--space-4);
+      background: rgba(4,83,178,0.06);
+      border-radius: var(--radius-lg);
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      border-left: 3px solid var(--color-primary);
+    }
+    .export-box { margin-top: var(--space-5); display: grid; gap: var(--space-3); }
+    .footer-mini { color: var(--color-text-faint); font-size: var(--text-xs); font-weight: 500; }
+
+    @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .summary { position: static; } }
+    @media (max-width: 720px) {
+      .app { padding: var(--space-4); }
+      .row-grid, .row-grid.expenses { grid-template-columns: 1fr; }
+      .panel-inner { padding: var(--space-4); }
+      .topbar-wrapper { padding: 0.75rem 1rem; }
+      .topbar-title { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR CON LOGO -->
+<div class="topbar-wrapper">
+  <div style="display:flex;align-items:center;gap:1rem">
+    <div class="topbar-logo">
+      <img src="logo-oficial-aire-web.png" alt="Logo Aire" />
+    </div>
+    <div>
+      <div class="topbar-title">Calculadora de cotización de servicio de coordinación. Aire Consultora</div>
+      <div class="topbar-subtitle">Horas, fee, bonos, gastos de gestión e IGV</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Cambiar tema"></button>
+  </div>
+</div>
+
+<div class="app">
+  <main class="layout">
+    <section>
+      <article class="panel">
+        <div class="panel-inner">
+          <div class="section-header">
+            <h2>Equipo de coordinación</h2>
+            <p>Ingresa el nombre, horas trabajadas y pago por hora.</p>
+          </div>
+          <div id="peopleList" class="group-stack"></div>
+          <div class="actions" style="margin-top:1rem">
+            <button class="btn" type="button" id="addPerson">+ Agregar persona</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-inner">
+          <div class="section-header">
+            <h2>Porcentaje de ganancia</h2>
+            <p>Fee y bono comercial (si se paga a quien consiguó el trabajo) o descuento.</p>
+          </div>
+          <div class="row-grid">
+            <div class="field"><label for="feePct">Fee Aire (%)</label><input id="feePct" type="number" value="25" step="0.01" min="0" /></div>
+            <div class="field"><label for="bonusPct">Bono o Descuento (%)</label><input id="bonusPct" type="number" value="5" step="0.01" /></div>
+            <div class="field"><label>Modo bono</label><input value="+ bono / − descuenta" disabled /></div>
+          </div>
+          <p class="note">Ejemplo: para bono colocar 5 (5%); para descuento colocar -3 (3%) sobre el subtotal del fee).</p>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-inner">
+          <div class="section-header">
+            <h2>Gastos extras</h2>
+            <p>Pasajes, impresiones u otros. Se agrega un 5% por gestión, por si genera un gasto invisible.</p>
+          </div>
+          <div id="expenseList" class="group-stack"></div>
+          <div class="actions" style="margin-top:1rem">
+            <button class="btn" type="button" id="addExpense">+ Agregar gasto</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <aside class="summary">
+      <article class="panel">
+        <div class="panel-inner">
+          <div class="section-header">
+            <h2>Resumen del servicio</h2>
+            <p>Se calcula automóticamente.</p>
+          </div>
+          <div class="summary-grid">
+            <div class="metric"><span>Subtotal horas trabajadas</span><strong id="hoursSubtotal">S/ 0.00</strong></div>
+            <div class="metric"><span>Fee Aire</span><strong id="feeAmount">S/ 0.00</strong></div>
+            <div class="metric"><span>Bono comercial</span><strong id="bonusAmount">S/ 0.00</strong></div>
+            <div class="metric"><span>5% de gestión del gasto</span><strong id="expenseManaged">S/ 0.00</strong></div>
+            <div class="metric"><span>IGV (18%)</span><strong id="igvAmount">S/ 0.00</strong></div>
+            <div class="metric total"><span>Costo total del servicio</span><strong id="grandTotal">S/ 0.00</strong></div>
+          </div>
+          <div class="breakdown">
+            <div class="break-item"><span>Costo sin impuesto</span><strong id="taxableBase">S/ 0.00</strong></div>
+            <div class="subgroup"><h3>Horas, fee y bono</h3><div id="peopleBreakdown"></div></div>
+            <div class="subgroup"><h3>Gastos</h3><div id="expenseBreakdown"></div></div>
+          </div>
+          <div class="export-box">
+            <button class="btn" type="button" id="exportPdf">Exportar resumen en PDF</button>
+            <p class="footer-mini">El PDF incluye detalle por persona, gastos y totales con IGV.</p>
+          </div>
+        </div>
+      </article>
+    </aside>
+  </main>
+</div>
+
+<script type="text/javascript">
+const money = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN', minimumFractionDigits: 2 });
+const qs = s => document.querySelector(s);
+
+/* Tema claro que inicie por defecto*/
+const themeState = { mode: 'light' };
+
+function applyDarkOverride(mode) {
+  if (mode === 'dark') {
+    document.documentElement.style.setProperty('--color-bg', '#171614');
+    document.documentElement.style.setProperty('--color-surface', '#1c1b19');
+    document.documentElement.style.setProperty('--color-surface-2', '#201f1d');
+    document.documentElement.style.setProperty('--color-surface-offset', '#262320');
+    document.documentElement.style.setProperty('--color-border', '#393836');
+    document.documentElement.style.setProperty('--color-divider', '#2d2c2a');
+    document.documentElement.style.setProperty('--color-text', '#cdccca');
+    document.documentElement.style.setProperty('--color-text-muted', '#a3a19d');
+    document.documentElement.style.setProperty('--color-text-faint', '#767471');
+    document.documentElement.style.setProperty('--color-primary', '#4f98d0');
+    document.documentElement.style.setProperty('--color-primary-hover', '#3a7ab5');
+    document.documentElement.style.setProperty('--color-primary-highlight', '#1a3050');
+  } else {
+    document.documentElement.style.setProperty('--color-bg', '#f4f3ee');
+    document.documentElement.style.setProperty('--color-surface', '#f9f8f5');
+    document.documentElement.style.setProperty('--color-surface-2', '#ffffff');
+    document.documentElement.style.setProperty('--color-surface-offset', '#edeae5');
+    document.documentElement.style.setProperty('--color-border', '#d4d1ca');
+    document.documentElement.style.setProperty('--color-divider', '#dcd9d5');
+    document.documentElement.style.setProperty('--color-text', '#101010');
+    document.documentElement.style.setProperty('--color-text-muted', '#6d6a63');
+    document.documentElement.style.setProperty('--color-text-faint', '#9f9b92');
+    document.documentElement.style.setProperty('--color-primary', '#0453b2');
+    document.documentElement.style.setProperty('--color-primary-hover', '#033d87');
+    document.documentElement.style.setProperty('--color-primary-highlight', '#d0e1f7');
+  }
+}
+
+function renderThemeIcon() {
+  applyDarkOverride(themeState.mode);
+  qs('[data-theme-toggle]').innerHTML = themeState.mode === 'dark'
+    ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+    : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+}
+
+qs('[data-theme-toggle]').addEventListener('click', () => {
+  themeState.mode = themeState.mode === 'dark' ? 'light' : 'dark';
+  renderThemeIcon();
+});
+renderThemeIcon();
+
+function createPersonRow(data = {}) {
+  const card = document.createElement('div');
+  card.className = 'row-card';
+  card.innerHTML = `
+    <div class="row-grid">
+      <div class="field"><label>Nombre</label><input data-key="name" placeholder="Ej. Felipe" value="${data.name || ''}"></div>
+      <div class="field"><label>Horas</label><input data-key="hours" type="number" min="0" step="0.01" placeholder="0" value="${data.hours || ''}"></div>
+      <div class="field"><label>Pago por hora</label><input data-key="rate" type="number" min="0" step="0.01" placeholder="0.00" value="${data.rate || ''}"></div>
+    </div>
+    <div class="actions"><button class="btn-ghost" type="button">Eliminar</button></div>`;
+  card.querySelector('button').addEventListener('click', () => { card.remove(); calculate(); });
+  card.querySelectorAll('input').forEach(i => i.addEventListener('input', calculate));
+  qs('#peopleList').appendChild(card);
+}
+
+function createExpenseRow(data = {}) {
+  const card = document.createElement('div');
+  card.className = 'row-card';
+  card.innerHTML = `
+    <div class="row-grid expenses">
+      <div class="field"><label>Descripción</label><input data-key="name" placeholder="Ej. Pasajes" value="${data.name || ''}"></div>
+      <div class="field"><label>Monto</label><input data-key="amount" type="number" min="0" step="0.01" placeholder="0.00" value="${data.amount || ''}"></div>
+    </div>
+    <div class="actions"><button class="btn-ghost" type="button">Eliminar</button></div>`;
+  card.querySelector('button').addEventListener('click', () => { card.remove(); calculate(); });
+  card.querySelectorAll('input').forEach(i => i.addEventListener('input', calculate));
+  qs('#expenseList').appendChild(card);
+}
+
+qs('#addPerson').addEventListener('click', () => createPersonRow());
+qs('#addExpense').addEventListener('click', () => createExpenseRow());
+qs('#feePct').addEventListener('input', calculate);
+qs('#bonusPct').addEventListener('input', calculate);
+
+function getPeople() {
+  return [...qs('#peopleList').children].map(card => {
+    const i = card.querySelectorAll('input');
+    return { name: i[0].value.trim() || 'Sin nombre', hours: parseFloat(i[1].value) || 0, rate: parseFloat(i[2].value) || 0 };
+  });
+}
+
+function getExpenses() {
+  return [...qs('#expenseList').children].map(card => {
+    const i = card.querySelectorAll('input');
+    return { name: i[0].value.trim() || 'Gasto', amount: parseFloat(i[1].value) || 0 };
+  });
+}
+
+function calculate() {
+  const people = getPeople();
+  const expenses = getExpenses();
+  const fee = (parseFloat(qs('#feePct').value) || 0) / 100;
+  const bonus = (parseFloat(qs('#bonusPct').value) || 0) / 100;
+
+  const peopleDetailed = people.map(p => ({ ...p, subtotal: p.hours * p.rate }));
+  const hoursSubtotal = peopleDetailed.reduce((s, p) => s + p.subtotal, 0);
+  const feeAmount = hoursSubtotal * fee;
+  const subtotalWithFee = hoursSubtotal + feeAmount;
+  const bonusAmount = subtotalWithFee * bonus;
+  const adjustedSubtotal = subtotalWithFee + bonusAmount;
+  const rawExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const expenseMgmtAmount = rawExpenses * 0.05;
+  const expenseManaged = rawExpenses + expenseMgmtAmount;
+  const taxableBase = adjustedSubtotal + expenseManaged;
+  const igvAmount = taxableBase * 0.18;
+  const grandTotal = taxableBase + igvAmount;
+
+  qs('#hoursSubtotal').textContent = money.format(hoursSubtotal);
+  qs('#feeAmount').textContent = money.format(feeAmount);
+  qs('#bonusAmount').textContent = money.format(bonusAmount);
+  qs('#expenseManaged').textContent = money.format(expenseManaged);
+  qs('#igvAmount').textContent = money.format(igvAmount);
+  qs('#grandTotal').textContent = money.format(grandTotal);
+  qs('#taxableBase').textContent = money.format(taxableBase);
+
+  const pb = qs('#peopleBreakdown');
+  pb.innerHTML = '';
+  peopleDetailed.forEach(p => {
+    const r = document.createElement('div'); r.className = 'subitem';
+    r.innerHTML = `<span>${p.name} · ${p.hours}h × ${money.format(p.rate)}</span><strong>${money.format(p.subtotal)}</strong>`;
+    pb.appendChild(r);
+  });
+  if (!peopleDetailed.length) pb.innerHTML = '<div class="subitem"><span>Sin personas registradas</span><strong>—</strong></div>';
+  [['Fee Aire', fee * 100, feeAmount], ['Bono comercial', bonus * 100, bonusAmount]].forEach(([label, pct, amt]) => {
+    const r = document.createElement('div'); r.className = 'subitem';
+    r.innerHTML = `<span>${label} (${pct.toFixed(1).replace(/\.0$/, '')}%)</span><strong>${money.format(amt)}</strong>`;
+    pb.appendChild(r);
+  });
+
+  const eb = qs('#expenseBreakdown');
+  eb.innerHTML = '';
+  expenses.forEach(e => {
+    const r = document.createElement('div'); r.className = 'subitem';
+    r.innerHTML = `<span>${e.name}</span><strong>${money.format(e.amount)}</strong>`;
+    eb.appendChild(r);
+  });
+  if (!expenses.length) eb.innerHTML = '<div class="subitem"><span>Sin gastos registrados</span><strong>—</strong></div>';
+  const mg = document.createElement('div'); mg.className = 'subitem';
+  mg.innerHTML = `<span>Gestión de gastos (5%)</span><strong>${money.format(expenseMgmtAmount)}</strong>`;
+  eb.appendChild(mg);
+
+  window.calc = { peopleDetailed, expenses, feePct: fee * 100, bonusPct: bonus * 100, hoursSubtotal, feeAmount, bonusAmount, adjustedSubtotal, rawExpenses, expenseMgmtAmount, expenseManaged, taxableBase, igvAmount, grandTotal };
+}
+
+qs('#exportPdf').addEventListener('click', () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const d = window.calc;
+  const L = 48; let y = 54;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+  doc.text('Resumen de costo del servicio — Aire', L, y); y += 20;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  doc.text(`Generado: ${new Date().toLocaleString('es-PE')}`, L, y); y += 28;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text('1. Horas de coordinación', L, y); y += 18;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+  d.peopleDetailed.forEach(p => { doc.text(`${p.name}: ${p.hours} h × ${money.format(p.rate)} = ${money.format(p.subtotal)}`, L, y); y += 16; });
+  if (!d.peopleDetailed.length) { doc.text('Sin personas registradas', L, y); y += 16; }
+  doc.text(`Subtotal horas: ${money.format(d.hoursSubtotal)}`, L, y); y += 14;
+  doc.text(`Fee Aire (${d.feePct}%): ${money.format(d.feeAmount)}`, L, y); y += 14;
+  doc.text(`Bono comercial (${d.bonusPct}%): ${money.format(d.bonusAmount)}`, L, y); y += 28;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text('2. Gastos extras', L, y); y += 18;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+  d.expenses.forEach(e => { doc.text(`${e.name}: ${money.format(e.amount)}`, L, y); y += 16; });
+  if (!d.expenses.length) { doc.text('Sin gastos registrados', L, y); y += 16; }
+  doc.text(`Gestión de gastos (5%): ${money.format(d.expenseMgmtAmount)}`, L, y); y += 28;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text('3. Totales', L, y); y += 18;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+  [['Subtotal ajustado', d.adjustedSubtotal], ['Gastos con gestión', d.expenseManaged], ['Sub total sin IGV', d.taxableBase], ['IGV (18%)', d.igvAmount], ['TOTAL DEL SERVICIO', d.grandTotal]].forEach(([label, val]) => {
+    if (label === 'TOTAL DEL SERVICIO') { doc.setFont('helvetica', 'bold'); doc.setFontSize(13); }
+    doc.text(`${label}: ${money.format(val)}`, L, y); y += 18;
+  });
+  doc.save('resumen-servicio-aire.pdf');
+});
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() {
+    createPersonRow({ name: 'Coordinador 1', hours: 10, rate: 60 });
+    createExpenseRow({ name: 'Pasajes', amount: 45 });
+    calculate();
+  });
+} else {
+  createPersonRow({ name: 'Coordinador 1', hours: 10, rate: 60 });
+  createExpenseRow({ name: 'Pasajes', amount: 45 });
+  calculate();
+}
+</script>
+</body>
+</html>
