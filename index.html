@@ -6,6 +6,12 @@
   <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
   <title>Calculadora de cotización de servicio · Aire Consultora</title>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="xlsx.full.min.js"></script>
+  <script>
+    if (typeof XLSX === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');
+    }
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
@@ -340,6 +346,15 @@
       box-shadow: 0 4px 14px rgba(4,83,178,0.25);
     }
 
+    .btn-excel {
+      background: #0e7a3d;
+      color: #ffffff;
+    }
+    .btn-excel:hover {
+      background: #0a5c2d;
+      box-shadow: 0 4px 14px rgba(14,122,61,0.25);
+    }
+
     .btn-ghost {
       background: transparent;
       border: 1px solid var(--color-border);
@@ -533,8 +548,8 @@
       <img src="logo-oficial-aire-web.png" alt="Logo Aire Consultora" />
     </div>
     <div>
-      <div class="topbar-title">Calculadora de cotización de servicio</div>
-      <div class="topbar-subtitle">Equipo, servicios externos, gastos, fee, bono e IGV · Aire Consultora</div>
+      <div class="topbar-title">Calculadora de cotización de servicios</div>
+      <div class="topbar-subtitle">Equipo, servicios externos, gastos, fee, bono e IGV</div>
     </div>
   </div>
   <div class="topbar-right">
@@ -552,7 +567,7 @@
         <div class="panel-inner">
           <div class="section-header">
             <h2><span class="step-badge">1</span> Equipo de trabajo</h2>
-            <p>Define los roles, la cantidad de trabajadores, sus horas de dedicación y el pago por hora.</p>
+            <p>Define los roles y funciones, la cantidad de trabajadores asignados, sus horas de dedicación y el pago.</p>
           </div>
           <div id="peopleList" class="group-stack"></div>
           <div class="actions" style="margin-top:1.25rem">
@@ -569,7 +584,7 @@
         <div class="panel-inner">
           <div class="section-header">
             <h2><span class="step-badge">2</span> Servicios externos</h2>
-            <p>Proveedores, especialistas y servicios subcontratados. Elige si cotizan tarifa fija o por hora. Indica si su cotización incluye IGV.</p>
+            <p>Proveedores, especialistas o externos. Elige si cotizan tarifa fija o por hora, e indica si incluye IGV.</p>
           </div>
           <div id="externalList" class="group-stack"></div>
           <div class="actions" style="margin-top:1.25rem">
@@ -586,7 +601,7 @@
         <div class="panel-inner">
           <div class="section-header">
             <h2><span class="step-badge">3</span> Gastos extras</h2>
-            <p>Pasajes, viáticos, impresiones y materiales. Se suma <strong>5% de gestión administrativa al total de gastos</strong>.</p>
+            <p>Pasajes, impresiones, materiales, etc. Se suma un <strong>5% de gestión administrativa al total de gastos</strong>.</p>
           </div>
           <div id="expenseList" class="group-stack"></div>
           <div class="actions" style="margin-top:1.25rem">
@@ -602,8 +617,8 @@
       <article class="panel">
         <div class="panel-inner">
           <div class="section-header">
-            <h2><span class="step-badge">4</span> Porcentaje de utilidad y bono comercial</h2>
-            <p>El Fee Aire y el Bono comercial se calculan <strong>después de sumar el subtotal de Equipo de trabajo, Servicios externos y Gastos extras</strong>.</p>
+            <h2><span class="step-badge">4</span> Porcentaje de utilidad y Bono de venta</h2>
+            <p>Se calculan <strong>después de sumar el subtotal del equipo de trabajo, servicios y gastos extras</strong>.</p>
           </div>
           <div class="row-grid-profit">
             <div class="field">
@@ -611,12 +626,12 @@
               <input id="feePct" type="number" value="25" step="0.1" min="0" placeholder="25" />
             </div>
             <div class="field">
-              <label for="bonusPct">Bono comercial (%)</label>
+              <label for="bonusPct">Bono o Descuento (%)</label>
               <input id="bonusPct" type="number" value="5" step="0.1" placeholder="5" />
             </div>
           </div>
           <p class="note">
-            <strong>Flujo financiero:</strong> Los porcentajes se calculan directamente sobre el monto del <strong>Subtotal base operativa (1+2+3)</strong>.
+            <strong>Flujo financiero:</strong> Se calculan directamente sobre el monto del <strong>subtotal base operativa (1+2+3)</strong>.
           </p>
         </div>
       </article>
@@ -628,7 +643,7 @@
       <article class="panel">
         <div class="panel-inner">
           <div class="section-header">
-            <h2>Resumen del servicio</h2>
+            <h2>Resumen</h2>
             <p>Cálculo consolidado en tiempo real.</p>
           </div>
 
@@ -643,7 +658,7 @@
             </div>
             <!-- CASILLA SUBTOTAL X SERVICIOS (EQUIPO + EXTERNOS) -->
             <div class="metric highlight-subtotal">
-              <span>Subtotal Equipo + servicios</span>
+              <span>Subtotal Equipo + Servicios</span>
               <strong id="servicesSubtotal">S/ 0.00</strong>
             </div>
             <div class="metric">
@@ -704,7 +719,11 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
               Exportar cotización en PDF
             </button>
-            <p class="footer-mini">Incluye desglose por equipo, servicios externos, gastos, fee e IGV oficial.</p>
+            <button class="btn btn-excel" type="button" id="exportExcel" style="width:100%">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="17"></line><line x1="16" y1="13" x2="8" y2="17"></line></svg>
+              Exportar cotización en Excel (.xlsx)
+            </button>
+            <p class="footer-mini">El PDF incluye página de roles y funciones. El Excel conserva fórmulas matemáticas vivas y 2 pestañas.</p>
           </div>
         </div>
       </article>
@@ -777,7 +796,7 @@ function createPersonRow(data = {}) {
         <input data-key="name" type="text" placeholder="Ej. Coordinador general" value="${data.name || ''}">
       </div>
       <div class="field">
-        <label class="nowrap-label"># de trabajadores</label>
+        <label class="nowrap-label"># trabajadores</label>
         <input data-key="workers" type="number" min="1" step="1" placeholder="1" value="${defaultWorkers}">
       </div>
       <div class="field">
@@ -785,9 +804,13 @@ function createPersonRow(data = {}) {
         <input data-key="hours" type="number" min="0" step="0.5" placeholder="0" value="${data.hours !== undefined ? data.hours : ''}">
       </div>
       <div class="field">
-        <label class="nowrap-label">Pago por hora</label>
+        <label class="nowrap-label">Pago x hora</label>
         <input data-key="rate" type="number" min="0" step="0.01" placeholder="0.00" value="${data.rate !== undefined ? data.rate : ''}">
       </div>
+    </div>
+    <div class="field" style="margin-top:0.35rem">
+      <label class="nowrap-label">Funciones / Tareas del rol</label>
+      <textarea data-key="tasks" rows="2" placeholder="Ej. Planificación del cronograma, enlace con proveedores, supervisión técnica en campo y elaboración de entregables...">${data.tasks || ''}</textarea>
     </div>
     <div class="row-footer">
       <span class="subtotal-pill">Subtotal rol: <strong class="person-subtotal-val">S/ 0.00</strong></span>
@@ -799,6 +822,7 @@ function createPersonRow(data = {}) {
 
   card.querySelector('button').addEventListener('click', () => { card.remove(); calculate(); });
   card.querySelectorAll('input').forEach(i => i.addEventListener('input', calculate));
+  card.querySelector('textarea').addEventListener('input', calculate);
   qs('#peopleList').appendChild(card);
 }
 
@@ -935,7 +959,8 @@ function getPeople() {
     const workers = isNaN(workersVal) || workersVal < 1 ? 1 : workersVal;
     const hours = Math.max(0, parseFloat(card.querySelector('[data-key="hours"]').value) || 0);
     const rate = Math.max(0, parseFloat(card.querySelector('[data-key="rate"]').value) || 0);
-    return { name, workers, hours, rate, card };
+    const tasks = card.querySelector('[data-key="tasks"]') ? card.querySelector('[data-key="tasks"]').value.trim() : '';
+    return { name, workers, hours, rate, tasks, card };
   });
 }
 
@@ -1236,12 +1261,349 @@ qs('#exportPdf').addEventListener('click', () => {
     y += 16;
   });
 
+  // ==========================================
+  // PÁGINA 2: ANEXO DE ROLES Y FUNCIONES DEL EQUIPO
+  // ==========================================
+  doc.addPage();
+  y = 50;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(4, 83, 178);
+  doc.text('ANEXO: ROLES Y FUNCIONES DEL EQUIPO', L, y);
+  y += 18;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Aire Consultora · Estructura operativa y asignación de tareas · ${new Date().toLocaleDateString('es-PE')}`, L, y);
+  y += 20;
+
+  doc.setDrawColor(215, 215, 215);
+  doc.line(L, y, R, y);
+  y += 24;
+
+  if (!d.peopleDetailed.length) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text('No se han registrado roles en el equipo de trabajo.', L, y);
+  } else {
+    d.peopleDetailed.forEach((p, idx) => {
+      if (y > 710) {
+        doc.addPage();
+        y = 50;
+      }
+
+      // Título de rol
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11.5);
+      doc.setTextColor(4, 83, 178);
+      const workerLabel = p.workers > 1 ? `${p.workers} integrantes` : '1 integrante';
+      doc.text(`${idx + 1}. ${p.name}`, L, y);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(110, 110, 110);
+      doc.text(`(${workerLabel} · ${p.hours} h x trab. · Subtotal: ${formatMoney(p.subtotal)})`, R, y, { align: 'right' });
+      y += 16;
+
+      // Label funciones
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(30, 30, 30);
+      doc.text('Funciones y Tareas:', L + 10, y);
+      y += 14;
+
+      // Texto de funciones
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(60, 60, 60);
+
+      const tasksText = p.tasks && p.tasks.trim() ? p.tasks.trim() : 'Funciones estándar de coordinación, gestión operativa y soporte técnico continuo del servicio.';
+      const lines = doc.splitTextToSize(tasksText, R - L - 20);
+      lines.forEach(line => {
+        if (y > 760) {
+          doc.addPage();
+          y = 50;
+        }
+        doc.text(line, L + 14, y);
+        y += 13.5;
+      });
+
+      y += 10;
+      doc.setDrawColor(230, 230, 230);
+      doc.line(L, y, R, y);
+      y += 18;
+    });
+  }
+
   doc.save('cotizacion-servicio-aire.pdf');
+});
+
+/* EXPORTACIÓN EN EXCEL (.XLSX) CON FÓRMULAS VIVAS Y 2 PESTAÑAS */
+function runExportExcel() {
+  const d = window.calc;
+  const wb = XLSX.utils.book_new();
+
+  // ==========================================
+  // HOJA 1: COTIZACIÓN (CON FÓRMULAS MATEMÁTICAS)
+  // ==========================================
+  const rows = [];
+  rows.push(['COTIZACIÓN DE SERVICIOS · AIRE CONSULTORA']);
+  rows.push([`Fecha y hora de emisión: ${new Date().toLocaleString('es-PE')}`]);
+  rows.push([]);
+
+  // 1. EQUIPO DE TRABAJO
+  rows.push(['1. EQUIPO DE TRABAJO']);
+  rows.push(['Rol', 'N° Trabajadores', 'Horas x trabajador', 'Pago por hora (S/)', 'Subtotal (S/)']);
+  
+  let teamTotalRow;
+  if (d.peopleDetailed.length > 0) {
+    const teamStartRow = rows.length + 1;
+    d.peopleDetailed.forEach(p => {
+      const curRow = rows.length + 1;
+      rows.push([
+        p.name,
+        p.workers,
+        p.hours,
+        p.rate,
+        { t: 'n', f: `B${curRow}*C${curRow}*D${curRow}`, v: p.subtotal }
+      ]);
+    });
+    const teamEndRow = rows.length;
+    teamTotalRow = rows.length + 1;
+    rows.push([
+      'Subtotal Equipo de Trabajo',
+      '',
+      '',
+      '',
+      { t: 'n', f: `SUM(E${teamStartRow}:E${teamEndRow})`, v: d.hoursSubtotal }
+    ]);
+  } else {
+    teamTotalRow = rows.length + 1;
+    rows.push(['Subtotal Equipo de Trabajo', '', '', '', 0]);
+  }
+
+  // 2. SERVICIOS EXTERNOS
+  rows.push([]);
+  rows.push(['2. SERVICIOS EXTERNOS']);
+  rows.push(['Servicio / Proveedor', 'Modalidad', 'Horas', 'Tarifa x hora / Monto (S/)', 'Base neta cotizada (S/)']);
+  let extTotalRow;
+  if (d.externalDetailed.length > 0) {
+    const extStartRow = rows.length + 1;
+    d.externalDetailed.forEach(e => {
+      const curRow = rows.length + 1;
+      if (e.isHourly) {
+        const f = e.includesIgv ? `(C${curRow}*D${curRow})/1.18` : `C${curRow}*D${curRow}`;
+        rows.push([
+          e.name,
+          'Por horas' + (e.includesIgv ? ' (-18% IGV)' : ''),
+          e.hours,
+          e.rate,
+          { t: 'n', f, v: e.netBase }
+        ]);
+      } else {
+        const f = e.includesIgv ? `D${curRow}/1.18` : `D${curRow}`;
+        rows.push([
+          e.name,
+          'Tarifa fija' + (e.includesIgv ? ' (-18% IGV)' : ''),
+          '-',
+          e.total,
+          { t: 'n', f, v: e.netBase }
+        ]);
+      }
+    });
+    const extEndRow = rows.length;
+    extTotalRow = rows.length + 1;
+    rows.push([
+      'Subtotal Servicios Externos',
+      '',
+      '',
+      '',
+      { t: 'n', f: `SUM(E${extStartRow}:E${extEndRow})`, v: d.externalSubtotal }
+    ]);
+  } else {
+    extTotalRow = rows.length + 1;
+    rows.push(['Subtotal Servicios Externos', '', '', '', 0]);
+  }
+
+  // 3. GASTOS EXTRAS
+  rows.push([]);
+  rows.push(['3. GASTOS EXTRAS']);
+  rows.push(['Descripción del gasto', '', '', '', 'Monto directo (S/)']);
+  let expDirectTotalRow;
+  if (d.expenses.length > 0) {
+    const expStartRow = rows.length + 1;
+    d.expenses.forEach(e => {
+      rows.push([
+        e.name,
+        '',
+        '',
+        '',
+        e.amount
+      ]);
+    });
+    const expEndRow = rows.length;
+    expDirectTotalRow = rows.length + 1;
+    rows.push([
+      'Suma de gastos directos',
+      '',
+      '',
+      '',
+      { t: 'n', f: `SUM(E${expStartRow}:E${expEndRow})`, v: d.rawExpenses }
+    ]);
+  } else {
+    expDirectTotalRow = rows.length + 1;
+    rows.push(['Suma de gastos directos', '', '', '', 0]);
+  }
+
+  const expMgmtRow = rows.length + 1;
+  rows.push([
+    'Gestión administrativa (5% global de gastos)',
+    '',
+    '',
+    '',
+    { t: 'n', f: `E${expDirectTotalRow}*0.05`, v: d.expenseMgmtAmount }
+  ]);
+  const expFinalTotalRow = rows.length + 1;
+  rows.push([
+    'Subtotal Gastos Extras (con gestión)',
+    '',
+    '',
+    '',
+    { t: 'n', f: `E${expDirectTotalRow}+E${expMgmtRow}`, v: d.expenseManaged }
+  ]);
+
+  // 4. RESUMEN CONSOLIDADO Y MARGEN COMERCIAL
+  rows.push([]);
+  rows.push(['4. RESUMEN CONSOLIDADO Y MARGEN']);
+  const opBaseRow = rows.length + 1;
+  rows.push([
+    'Subtotal Base Operativa (1+2+3)',
+    '',
+    '',
+    '',
+    { t: 'n', f: `E${teamTotalRow}+E${extTotalRow}+E${expFinalTotalRow}`, v: d.operationalBase }
+  ]);
+  const feeRow = rows.length + 1;
+  rows.push([
+    `Fee Aire (${d.feePct}%)`,
+    '',
+    '',
+    '',
+    { t: 'n', f: `E${opBaseRow}*${(d.feePct / 100).toFixed(4)}`, v: d.feeAmount }
+  ]);
+  const bonusRow = rows.length + 1;
+  const bonusLabel = d.bonusPct < 0 ? `Descuento comercial (${d.bonusPct}%)` : `Bono comercial (${d.bonusPct}%)`;
+  rows.push([
+    bonusLabel,
+    '',
+    '',
+    '',
+    { t: 'n', f: `E${opBaseRow}*${(d.bonusPct / 100).toFixed(4)}`, v: d.bonusAmount }
+  ]);
+  const taxableRow = rows.length + 1;
+  rows.push([
+    'Base imponible (Subtotal antes de IGV)',
+    '',
+    '',
+    '',
+    { t: 'n', f: `E${opBaseRow}+E${feeRow}+E${bonusRow}`, v: d.taxableBase }
+  ]);
+  const igvRow = rows.length + 1;
+  rows.push([
+    'IGV de la cotización (18%)',
+    '',
+    '',
+    '',
+    { t: 'n', f: `E${taxableRow}*0.18`, v: d.igvAmount }
+  ]);
+  const grandTotalRow = rows.length + 1;
+  rows.push([
+    'COSTO TOTAL DEL SERVICIO',
+    '',
+    '',
+    '',
+    { t: 'n', f: `E${taxableRow}+E${igvRow}`, v: d.grandTotal }
+  ]);
+
+  const wsCotizacion = XLSX.utils.aoa_to_sheet(rows);
+  wsCotizacion['!cols'] = [
+    { wch: 38 },
+    { wch: 18 },
+    { wch: 20 },
+    { wch: 25 },
+    { wch: 25 }
+  ];
+  XLSX.utils.book_append_sheet(wb, wsCotizacion, 'Cotización');
+
+  // ==========================================
+  // HOJA 2: ROLES Y FUNCIONES DEL EQUIPO
+  // ==========================================
+  const rolesRows = [];
+  rolesRows.push(['ROLES Y FUNCIONES DEL EQUIPO · AIRE CONSULTORA']);
+  rolesRows.push([`Generado: ${new Date().toLocaleString('es-PE')}`]);
+  rolesRows.push([]);
+  rolesRows.push(['Rol', 'N° Trabajadores', 'Horas x trabajador', 'Pago por hora (S/)', 'Subtotal rol (S/)', 'Funciones y Tareas Asignadas']);
+
+  d.peopleDetailed.forEach(p => {
+    rolesRows.push([
+      p.name,
+      p.workers,
+      p.hours,
+      p.rate,
+      p.subtotal,
+      p.tasks && p.tasks.trim() ? p.tasks.trim() : 'Funciones estándar de coordinación, gestión operativa y soporte técnico continuo del servicio.'
+    ]);
+  });
+  if (!d.peopleDetailed.length) {
+    rolesRows.push(['Sin roles registrados', '', '', '', '', '']);
+  }
+
+  const wsRoles = XLSX.utils.aoa_to_sheet(rolesRows);
+  wsRoles['!cols'] = [
+    { wch: 28 },
+    { wch: 16 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 70 }
+  ];
+  XLSX.utils.book_append_sheet(wb, wsRoles, 'Roles y Funciones');
+
+  XLSX.writeFile(wb, 'cotizacion-servicio-aire.xlsx');
+}
+
+qs('#exportExcel').addEventListener('click', () => {
+  if (typeof XLSX !== 'undefined') {
+    runExportExcel();
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = 'xlsx.full.min.js';
+  script.onload = () => runExportExcel();
+  script.onerror = () => {
+    const fallbackScript = document.createElement('script');
+    fallbackScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    fallbackScript.onload = () => runExportExcel();
+    fallbackScript.onerror = () => {
+      alert('No se pudo cargar la librería de Excel. Por favor verifica que el archivo xlsx.full.min.js esté en la misma carpeta o revisa tu conexión a internet.');
+    };
+    document.head.appendChild(fallbackScript);
+  };
+  document.head.appendChild(script);
 });
 
 // Inicialización de muestra
 function init() {
-  createPersonRow({ name: 'Coordinador general', workers: 1, hours: 10, rate: 60 });
+  createPersonRow({
+    name: 'Coordinador general',
+    workers: 1,
+    hours: 10,
+    rate: 60,
+    tasks: 'Planificación integral del cronograma, enlace con proveedores, supervisión técnica en campo y elaboración de entregables ejecutivos.'
+  });
   createExternalRow({ name: 'Filmación y registro audiovisual', isHourly: false, total: 450, includesIgv: false });
   createExpenseRow({ name: 'Pasajes y movilidad', amount: 45 });
   calculate();
